@@ -9,7 +9,7 @@ users.get('/users', async (req, res) => {
             return res
                 .status(404)
                 .send({
-                    statusCode: 4004,
+                    statusCode: 404,
                     message: "User not found"
                 })
         }
