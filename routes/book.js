@@ -1,10 +1,20 @@
 const express = require('express')
 const books = express.Router()
 const BooksModel = require('../models/BooksModel')
+const { default: mongoose } = require('mongoose')
 
 books.get('/books', async (req, res) => {
+    const { page, pageSize = 12 } = req.query
+
+
     try {
-        const books = await BooksModel.find()
+        const books = await BooksModel
+            .find()
+            .limit(pageSize)
+            .skip((page - 1) * pageSize)
+        
+        const count = await BooksModel.countDocuments()
+        const totalPages = Math.ceil(count / pageSize)
 
         if (books.length === 0) {
             return res
@@ -19,6 +29,8 @@ books.get('/books', async (req, res) => {
             .status(200)
             .send({
                 statusCode: 200,
+                count,
+                totalPages,
                 books
             })
     } catch (error) {
@@ -138,7 +150,7 @@ books.delete('/books/:bookId', async (req, res) => {
     }
     try {
         const deleteBookData = req.body
-        const options = { new : true }
+        const options = { new: true }
 
         const result = await BooksModel.findByIdAndDelete(bookId, deleteBookData, options)
 
@@ -147,7 +159,7 @@ books.delete('/books/:bookId', async (req, res) => {
             .send({
                 statusCode: 200,
                 messege: " Book deleted with successfully"
-                
+
             })
     } catch (error) {
         res
