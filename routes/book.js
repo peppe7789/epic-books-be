@@ -2,6 +2,8 @@ const express = require('express')
 const books = express.Router()
 const BooksModel = require('../models/BooksModel')
 const { default: mongoose } = require('mongoose')
+const validateBookBody= require('../middlewere/validateBookBody')
+const validateBookId = require('../middlewere/valideateBooksIdParam')
 
 books.get('/books', async (req, res) => {
     const { page, pageSize = 12 } = req.query
@@ -12,6 +14,7 @@ books.get('/books', async (req, res) => {
             .find()
             .limit(pageSize)
             .skip((page - 1) * pageSize)
+        
         
         const count = await BooksModel.countDocuments()
         const totalPages = Math.ceil(count / pageSize)
@@ -43,7 +46,7 @@ books.get('/books', async (req, res) => {
     }
 })
 
-books.get('/books/:bookId', async (req, res) => {
+books.get('/books/:bookId', [validateBookId], async (req, res) => {
     const { bookId } = req.params
     try {
         const book = await BooksModel.findById(bookId)
@@ -74,7 +77,7 @@ books.get('/books/:bookId', async (req, res) => {
 })
 
 
-books.post('/books/create', async (req, res) => {
+books.post('/books/create', [validateBookBody], async (req, res) => {
     const { title, img, price, category } = req.body
     const newBook = new BooksModel({
         title: title,
@@ -102,7 +105,7 @@ books.post('/books/create', async (req, res) => {
 })
 
 
-books.put('/books/:bookId', async (req, res) => {
+books.put('/books/:bookId',[validateBookId],  async (req, res) => {
     const { bookId } = req.params
     const book = await BooksModel.findById(bookId)
 
@@ -135,7 +138,7 @@ books.put('/books/:bookId', async (req, res) => {
 
 
 
-books.delete('/books/:bookId', async (req, res) => {
+books.delete('/books/:bookId',[validateBookId], async (req, res) => {
     const { bookId } = req.params
 
     const book = await BooksModel.findByIdAndDelete(bookId)
@@ -171,7 +174,41 @@ books.delete('/books/:bookId', async (req, res) => {
     }
 })
 
+books.get('/books/bytitle/:title', async (req, res) => {
+    const {title} = req.params
+    try {
+        const books = await BooksModel.find({
+            title: {
+                $regex: '.*' + title + '*.',
+                $options: 'i'
+            }
+        })
 
+        if (!books) {
+            return res
+                .status(404)
+                .send({
+                    statusCode: 404,
+                    message: "Book not found"
+            })
+        }
+
+        res
+            .status(200)
+            .send({
+                statusCode: 200, 
+                message: "Book found",
+                books
+        })
+    } catch (error) {
+        res
+            .status(500)
+            .send({
+                statusCode: 500,
+                message: "Oop, somethings went wrong"
+            })
+    }
+})
 
 
 
