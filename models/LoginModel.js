@@ -18,4 +18,4 @@ const LoginSchema = new mongoose.Schema({
     strict:true
 })
 
-module.exports = mongoose.model('loginModel', LoginSchema, 'logins')
+module.exports = mongoose.model('loginModel', LoginSchema, 'login')

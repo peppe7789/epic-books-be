@@ -1,9 +1,19 @@
 const express = require('express')
-const logins = express.Router()
+const login = express.Router()
 const LoginModel = require('../models/LoginModel')
 const { default: mongoose } = require('mongoose')
+const UserModel = require('../models/UserModel')
 
-logins.get('/logins', async (req, res) => {
+
+const isPasswordValid = (userPassword, reqPassword) => {
+    if (userPassword === reqPassword) {
+        return true;
+    } else {
+        return false
+    }
+}
+
+login.get('/login', async (req, res) => {
     
     try {
         const logins = await LoginModel.find()
@@ -34,25 +44,41 @@ logins.get('/logins', async (req, res) => {
     }
 })
 
-logins.post('/logins/create', async (req, res) => {
-    const { email, password } = req.body
-    const newLogin = new LoginModel({
-        email: email,
-        password: password
-    })
 
+login.post('/login', async (req, res) => {
+    const {email, password} = req.body
     try {
-        const login = await newLogin.save()
+        const user = await UserModel.findOne({ email: email })
+        
+        if (!user) {
+            return res
+                .status(404)
+                .send({
+                    statusCode: 404,
+                    message:'Utent not found'
+                })
+        }
 
+        const checkPassword = isPasswordValid(user.password, password)
+        console.log(checkPassword);
+        if (!checkPassword) {
+            return res
+                .status(403)
+                .send({
+                    statusCode: 403,
+                    message:'password not valid'
+                })
+
+        }
         res
-            .status(201)
+            .status(200)
             .send({
-                statusCode: 201,
-                message: "Login created with succefully",
-                login
+                statusCode: 200,
+                message:'Access authorized'
             })
+
     } catch (error) {
-        res
+        req
             .status(500)
             .send({
                 statusCode: 500,
@@ -61,4 +87,4 @@ logins.post('/logins/create', async (req, res) => {
     }
 })
 
-module.exports = logins
+module.exports = login

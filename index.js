@@ -20,6 +20,9 @@ const server = express()
 
 
 server.use(express.json())
+
+// server.use('/uploads', express.static(path.join(__dirname, './uploads')))
+
 server.use(cors())
 server.use(blockIpMiddleware(notAllowedIp))
 server.use(requestTimeMiddleware)
